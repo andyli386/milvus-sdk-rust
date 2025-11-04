@@ -765,6 +765,7 @@ impl QueryIterator {
                 if field_column.len() == 0 {
                     continue;
                 }
+
                 if let Some(last_value) = field_column.get(field_column.len() - 1) {
                     self.next_id = Some(match last_value {
                         Value::Long(id) => id.to_string(),
@@ -882,27 +883,20 @@ impl QueryIterator {
 
             let expr = self.build_next_expr();
 
+            // 方案 4：完全对齐 Python SDK - 参数值也要一致
+            // Python SDK 使用 "True" (大写) 而不是 "true"
             let mut query_params = vec![
                 KeyValuePair {
                     key: MILVUS_LIMIT.to_string(),
                     value: remaining_limit.to_string(),
                 },
                 KeyValuePair {
-                    key: "topk".to_string(),
-                    value: remaining_limit.to_string(),
-                },
-                KeyValuePair {
                     key: ITERATOR_FIELD.to_string(),
-                    value: "true".to_string(),
+                    value: "True".to_string(),  // 使用大写 T，与 Python 一致
                 },
-                KeyValuePair {
-                    key: "search_iter_v2".to_string(),
-                    value: "true".to_string(),
-                },
-                KeyValuePair {
-                    key: "search_iter_batch_size".to_string(),
-                    value: batch_size.to_string(),
-                },
+                // 移除 topk - Python SDK 不传此参数
+                // 移除 search_iter_v2 - Python SDK 不传此参数
+                // 移除 search_iter_batch_size - Python SDK 不传此参数
             ];
 
             if let Some(reduce_stop_for_best) = self.options.reduce_stop_for_best {
@@ -971,7 +965,17 @@ impl QueryIterator {
                 self.has_more = false;
             } else {
                 let actual_returned = results.iter().map(|r| r.len() as usize).sum::<usize>();
-                if actual_returned < remaining_limit {
+                // 不要基于 actual_returned < remaining_limit 来判断是否还有更多数据
+                // 因为 Milvus 可能返回不同数量的记录
+                // 只有当返回空结果时才设置 has_more = false
+                // 或者当达到用户指定的 limit 时
+                if let Some(limit) = self.options.limit {
+                    if self.returned_count + actual_returned >= limit {
+                        self.has_more = false;
+                    }
+                }
+                // 如果返回的数据为 0，说明没有更多数据了
+                if actual_returned == 0 {
                     self.has_more = false;
                 }
             }
@@ -983,8 +987,9 @@ impl QueryIterator {
             let min_len = if results.is_empty() {
                 0
             } else {
-                let min_data_len = results.iter().map(|field| field.len()).min().unwrap_or(0);
-                std::cmp::min(batch_size, min_data_len)
+                // 不要截断到 batch_size，返回所有 Milvus 给我们的数据
+                // 这样可以避免丢失数据
+                results.iter().map(|field| field.len()).min().unwrap_or(0)
             };
 
             if min_len == 0 {

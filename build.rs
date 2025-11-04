@@ -8,7 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "milvus-proto/proto/milvus.proto",
                 "milvus-proto/proto/schema.proto",
             ],
-            &["milvus-proto/proto"],
+            &["milvus-proto/proto", "/usr/include"],
         )?;
     Ok(())
 }
