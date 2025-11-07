@@ -1,4 +1,5 @@
 use crate::proto::{self, schema::DataType};
+use std::convert::TryFrom;
 
 pub(crate) type Timestamp = u64;
 
@@ -17,7 +18,7 @@ impl From<proto::schema::FieldSchema> for Field {
             id: value.field_id,
             name: value.name,
             description: value.description,
-            dtype: DataType::from_i32(value.data_type).unwrap_or(DataType::None),
+            dtype: DataType::try_from(value.data_type).unwrap_or(DataType::None),
             is_primary_key: value.is_primary_key,
         }
     }

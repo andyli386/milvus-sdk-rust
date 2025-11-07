@@ -408,6 +408,7 @@ pub struct QueryIterator {
         >,
     >,
     collection_name: String,
+    #[allow(dead_code)]
     consistency_level: ConsistencyLevel,
     options: QueryIteratorOptions,
     current_offset: i64,
@@ -892,7 +893,7 @@ impl QueryIterator {
                 },
                 KeyValuePair {
                     key: ITERATOR_FIELD.to_string(),
-                    value: "True".to_string(),  // 使用大写 T，与 Python 一致
+                    value: "True".to_string(), // 使用大写 T，与 Python 一致
                 },
                 // 移除 topk - Python SDK 不传此参数
                 // 移除 search_iter_v2 - Python SDK 不传此参数
@@ -1107,6 +1108,7 @@ pub struct SearchIterator {
         >,
     >,
     collection_name: String,
+    #[allow(dead_code)]
     consistency_level: ConsistencyLevel,
     data: Vec<crate::value::Value<'static>>,
     options: SearchIteratorOptions,

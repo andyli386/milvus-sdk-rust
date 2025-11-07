@@ -19,6 +19,7 @@ use crate::error::Result;
 use crate::proto::schema::FieldState;
 use prost::alloc::vec::Vec;
 use prost::encoding::bool;
+use std::convert::TryFrom;
 use thiserror::Error as ThisError;
 
 use crate::proto::{
@@ -187,7 +188,7 @@ impl From<schema::FieldSchema> for FieldSchema {
             .and_then(|x| x.value.parse().ok())
             .unwrap_or(1);
 
-        let dtype = DataType::from_i32(fld.data_type).unwrap();
+        let dtype = DataType::try_from(fld.data_type).unwrap();
 
         FieldSchema {
             name: fld.name,
@@ -485,6 +486,7 @@ impl From<CollectionSchema> for schema::CollectionSchema {
     fn from(col: CollectionSchema) -> Self {
         schema::CollectionSchema {
             name: col.name.to_string(),
+            #[allow(deprecated)]
             auto_id: col.auto_id(),
             description: col.description,
             fields: col.fields.into_iter().map(Into::into).collect(),

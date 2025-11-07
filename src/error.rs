@@ -19,6 +19,7 @@
 use crate::collection::Error as CollectionError;
 use crate::proto::common::{ErrorCode, Status};
 use crate::schema::Error as SchemaError;
+use std::convert::TryFrom;
 use std::result;
 use thiserror::Error;
 use tonic::transport::Error as CommError;
@@ -73,7 +74,16 @@ pub enum Error {
 
 impl From<Status> for Error {
     fn from(s: Status) -> Self {
-        Error::Server(ErrorCode::from_i32(s.error_code).unwrap(), s.reason)
+        let code = ErrorCode::try_from(s.code)
+            .or_else(|_| {
+                #[allow(deprecated)]
+                {
+                    ErrorCode::try_from(s.error_code)
+                }
+            })
+            .unwrap_or(ErrorCode::UnexpectedError);
+
+        Error::Server(code, s.reason)
     }
 }
 

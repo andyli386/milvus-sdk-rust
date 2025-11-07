@@ -112,7 +112,8 @@ impl Client {
                 collection_name,
                 collection_id: 0,        // reserved
                 partition_names: vec![], // reserved
-                r#type: 0,               // reserved
+                #[allow(deprecated)]
+                r#type: crate::proto::milvus::ShowType::All as i32,
             })
             .await?
             .into_inner();

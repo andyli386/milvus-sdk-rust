@@ -832,6 +832,7 @@ pub struct SearchOptions {
     pub(crate) search_params: Vec<KeyValuePair>,
     pub(crate) partition_names: Vec<String>,
     pub(crate) anns_field: Vec<String>,
+    #[allow(dead_code)]
     pub(crate) ranker: Option<Box<dyn BaseRanker>>,
     pub(crate) expr_template_values: HashMap<String, proto::schema::TemplateValue>,
     pub(crate) other_params: Option<Vec<KeyValuePair>>,

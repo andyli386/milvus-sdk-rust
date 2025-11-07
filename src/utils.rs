@@ -18,20 +18,26 @@ use crate::{
     error::Error,
     proto::common::{ErrorCode, Status},
 };
+use std::convert::TryFrom;
 
 pub fn status_to_result(status: &Option<Status>) -> Result<(), Error> {
     let status = status
         .clone()
         .ok_or(Error::Unexpected("no status".to_owned()))?;
 
-    match ErrorCode::from_i32(status.error_code) {
-        Some(i) => match i {
-            ErrorCode::Success => Ok(()),
-            _ => Err(Error::from(status)),
-        },
-        None => Err(Error::Unexpected(format!(
+    let code = ErrorCode::try_from(status.code).or_else(|_| {
+        #[allow(deprecated)]
+        {
+            ErrorCode::try_from(status.error_code)
+        }
+    });
+
+    match code {
+        Ok(ErrorCode::Success) => Ok(()),
+        Ok(_) => Err(Error::from(status)),
+        Err(_) => Err(Error::Unexpected(format!(
             "unknown error code {}",
-            status.error_code
+            status.code
         ))),
     }
 }
