@@ -27,6 +27,7 @@ pub mod partition;
 pub mod query;
 pub mod resource_group;
 pub mod schema;
+pub mod tests_common;
 pub mod value;
 
 mod config;

@@ -1,19 +1,9 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use milvus::tests_common::*;
 use milvus::{
-    client::*,
-    collection::*,
-    data::FieldColumn,
-    error::Result,
-    index::{IndexParams, IndexType, MetricType},
-    mutate::InsertOptions,
-    query::SearchOptions,
-    schema::CollectionSchema,
-    value::Value,
+    client::Client, data::FieldColumn, error::Result, query::SearchOptions,
+    schema::CollectionSchema, value::Value,
 };
-use std::{borrow::Cow, collections::HashMap};
+use std::borrow::Cow;
 
 fn gen_f32_data(size: i64) -> Vec<f32> {
     let mut data = Vec::<f32>::with_capacity(size as usize);
@@ -26,7 +16,7 @@ fn gen_f32_data(size: i64) -> Vec<f32> {
 fn gen_i64_data(size: i64) -> Vec<i64> {
     let mut data = Vec::<i64>::with_capacity(size as usize);
     for i in 0..size {
-        data.push(i as i64);
+        data.push(i);
     }
     data
 }
@@ -39,15 +29,13 @@ async fn insert_data(
     let ids = gen_i64_data(count);
     let vectors = gen_f32_data(count * DEFAULT_DIM);
 
-    let mut fields = Vec::new();
-    fields.push(FieldColumn::new(
-        collection.get_field("id").unwrap(),
-        ids.clone(),
-    ));
-    fields.push(FieldColumn::new(
-        collection.get_field(DEFAULT_VEC_FIELD).unwrap(),
-        vectors.clone(),
-    ));
+    let fields = vec![
+        FieldColumn::new(collection.get_field("id").unwrap(), ids.clone()),
+        FieldColumn::new(
+            collection.get_field(DEFAULT_VEC_FIELD).unwrap(),
+            vectors.clone(),
+        ),
+    ];
 
     client.insert(collection.name(), fields, None).await?;
     client.flush(collection.name()).await?;

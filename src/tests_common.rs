@@ -1,9 +1,11 @@
-use milvus::client::*;
-use milvus::data::FieldColumn;
-use milvus::error::Result;
-use milvus::index::IndexType;
-use milvus::options::CreateCollectionOptions;
-use milvus::schema::{CollectionSchema, CollectionSchemaBuilder, FieldSchema};
+#![allow(dead_code)]
+
+use crate::client::*;
+use crate::data::FieldColumn;
+use crate::error::Result;
+use crate::index::{IndexParams, IndexType, MetricType};
+use crate::options::CreateCollectionOptions;
+use crate::schema::{CollectionSchema, CollectionSchemaBuilder, FieldSchema};
 use rand::Rng;
 
 pub const DEFAULT_DIM: i64 = 128;
@@ -71,10 +73,10 @@ pub async fn create_test_collection_custom(
         .create_index(
             schema.name(),
             vector_field_name,
-            milvus::index::IndexParams::new(
+            IndexParams::new(
                 DEFAULT_INDEX_NAME.to_string(),
                 IndexType::IvfFlat,
-                milvus::index::MetricType::L2,
+                MetricType::L2,
                 std::collections::HashMap::new(),
             ),
         )

@@ -202,37 +202,34 @@ fn print_search_results(res: &Vec<SearchResult<'_>>) {
         })
         .collect::<Vec<_>>();
     let score_column = res.iter().map(|col| col.score.clone()).collect::<Vec<_>>();
-    for (ids, ages, pictures, scores) in id_column
+    for (((ids, ages), pictures), scores) in id_column
         .iter()
         .zip(age_column.iter())
         .zip(picture_column.iter())
         .zip(score_column.iter())
-        .map(|(((id, age), picture), score)| {
-            (id.clone(), age.clone(), picture.clone(), score.clone())
-        })
     {
         let id_column: Vec<i64> = ids.clone().try_into().unwrap();
         let age_column: Vec<i64> = ages.clone().try_into().unwrap();
         let picture_column: Vec<f32> = pictures.clone().try_into().unwrap();
-        let score_column: Vec<f32> = scores.clone().try_into().unwrap();
-        for (id, age, picture, score) in id_column
+        let score_column: Vec<f32> = scores.clone();
+        for (((id, age), picture), score) in id_column
             .iter()
             .zip(age_column.iter())
             .zip(picture_column.chunks(DIM as usize))
             .zip(score_column.iter())
-            .map(|(((id, age), picture), score)| {
-                (id.clone(), age.clone(), picture.to_vec(), score.clone())
-            })
         {
             println!(
                 "id: {} age: {} picture: {:?} score: {}",
-                id, age, picture, score
+                id,
+                age,
+                picture.to_vec(),
+                score
             );
         }
     }
 }
 
-fn print_get_results(res: &Vec<FieldColumn>) {
+fn print_get_results(res: &[FieldColumn]) {
     let id_column = res.iter().find(|col| col.name == USER_ID).unwrap();
     let age_column = res.iter().find(|col| col.name == AGE).unwrap();
     let deposit_column = res.iter().find(|col| col.name == DEPOSIT).unwrap();
@@ -242,18 +239,18 @@ fn print_get_results(res: &Vec<FieldColumn>) {
     let ages: Vec<i64> = age_column.value.clone().try_into().unwrap();
     let deposits: Vec<f64> = deposit_column.value.clone().try_into().unwrap();
     let pictures: Vec<f32> = picture_column.value.clone().try_into().unwrap();
-    for (id, age, deposit, picture) in ids
+    for (((id, age), deposit), picture) in ids
         .iter()
         .zip(ages.iter())
         .zip(deposits.iter())
         .zip(pictures.chunks(DIM as usize))
-        .map(|(((id, age), deposit), picture)| {
-            (id.clone(), age.clone(), deposit.clone(), picture.to_vec())
-        })
     {
         println!(
             "id: {} age: {} deposit: {} picture: {:?}",
-            id, age, deposit, picture
+            id,
+            age,
+            deposit,
+            picture.to_vec()
         );
     }
 }

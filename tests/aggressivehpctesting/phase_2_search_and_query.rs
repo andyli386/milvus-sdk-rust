@@ -1,15 +1,11 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
 use futures::future::join_all;
+use milvus::tests_common::*;
 use milvus::{
     client::*,
-    collection::*,
     data::FieldColumn,
     error::Result,
     index::{IndexParams, IndexType, MetricType},
-    mutate::{DeleteOptions, InsertOptions},
+    mutate::DeleteOptions,
     query::{QueryOptions, SearchOptions},
     schema::{CollectionSchemaBuilder, FieldSchema},
     value::ValueVec,

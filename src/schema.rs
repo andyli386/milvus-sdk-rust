@@ -411,7 +411,7 @@ impl From<FieldSchema> for schema::FieldSchema {
 
         schema::FieldSchema {
             field_id: 0,
-            name: fld.name.into(),
+            name: fld.name,
             is_primary_key: fld.is_primary,
             description: fld.description,
             data_type: fld.dtype as i32,
@@ -453,7 +453,7 @@ impl CollectionSchema {
     }
 
     pub fn validate(&self) -> Result<()> {
-        self.primary_column().ok_or_else(|| Error::NoPrimaryKey)?;
+        self.primary_column().ok_or(Error::NoPrimaryKey)?;
         // TODO addidtional schema checks need to be added here
         Ok(())
     }
@@ -469,16 +469,16 @@ impl CollectionSchema {
     pub fn is_valid_vector_field(&self, field_name: &str) -> Result<()> {
         for f in &self.fields {
             if f.name == field_name {
-                if f.dtype == DataType::BinaryVector || f.dtype == DataType::FloatVector {
-                    return Ok(());
+                return if matches!(f.dtype, DataType::BinaryVector | DataType::FloatVector) {
+                    Ok(())
                 } else {
-                    return Err(error::Error::from(Error::NotVectorField(
+                    Err(error::Error::from(Error::NotVectorField(
                         field_name.to_owned(),
-                    )));
-                }
+                    )))
+                };
             }
         }
-        return Err(error::Error::from(Error::NoSuchKey(field_name.to_owned())));
+        Err(error::Error::from(Error::NoSuchKey(field_name.to_owned())))
     }
 }
 
@@ -599,13 +599,13 @@ impl CollectionSchemaBuilder {
             return Err(error::Error::from(Error::NoPrimaryKey));
         }
 
-        let this = std::mem::replace(self, CollectionSchemaBuilder::new("".into(), ""));
+        let this = std::mem::replace(self, CollectionSchemaBuilder::new("", ""));
 
         Ok(CollectionSchema {
-            fields: this.inner.into(),
+            fields: this.inner,
             name: this.name,
             description: this.description,
-            enable_dynamic_field: self.enable_dynamic_field,
+            enable_dynamic_field: this.enable_dynamic_field,
         })
     }
 }

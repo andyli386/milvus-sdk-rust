@@ -169,7 +169,7 @@ async fn main() -> Result<(), Error> {
     let mut rng = rand::thread_rng();
     for i in 0..NUM_ENTITIES {
         user_ids.push(i);
-        ages.push((i % 100) as i64);
+        ages.push(i % 100);
         deposits.push(i as f64);
         for _ in 0..DIM {
             pictures.push(rng.gen::<f32>());

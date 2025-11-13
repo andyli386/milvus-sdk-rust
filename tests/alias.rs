@@ -1,5 +1,4 @@
-mod common;
-use common::*;
+use milvus::tests_common::*;
 use milvus::{client::Client, error::Result};
 
 async fn clean_test_collection(client: Client, collection_name: &str) -> Result<()> {
@@ -59,9 +58,8 @@ async fn list_aliases() -> Result<()> {
     assert_eq!(collection_name, schema.name());
 
     // the result is not in order,so transfer to hashset
-    let set1: std::collections::HashSet<_> = aliases.iter().collect();
-    let vec = vec![alias1.to_string(), alias2.to_string()];
-    let set2: std::collections::HashSet<_> = vec.iter().collect();
+    let set1: std::collections::HashSet<_> = aliases.iter().map(|s| s.as_str()).collect();
+    let set2: std::collections::HashSet<_> = [alias1, alias2].into_iter().collect();
     assert_eq!(set1, set2);
 
     client.drop_alias(alias1).await?;

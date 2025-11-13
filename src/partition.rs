@@ -13,25 +13,13 @@ use crate::{
 /// load_partitions' waitting time
 const WAIT_LOAD_DURATION_MS: u64 = 100;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct LoadPartitionsOption {
     resource_groups: Vec<String>,
     refresh: bool,
     load_fields: Vec<String>,
     skip_load_dynamic_field: bool,
     load_params: HashMap<String, String>,
-}
-
-impl Default for LoadPartitionsOption {
-    fn default() -> Self {
-        LoadPartitionsOption {
-            resource_groups: Vec::new(),
-            refresh: false,
-            load_fields: Vec::new(),
-            skip_load_dynamic_field: false,
-            load_params: HashMap::new(),
-        }
-    }
 }
 
 impl Client {
@@ -201,7 +189,7 @@ impl Client {
         S: Into<String>,
         I: IntoIterator<Item = &'a String>,
     {
-        let partition_names: Vec<String> = partition_names.into_iter().map(|x| x.into()).collect();
+        let partition_names: Vec<String> = partition_names.into_iter().cloned().collect();
         let resp = self
             .client
             .clone()
@@ -209,7 +197,7 @@ impl Client {
                 base: Some(MsgBase::new(MsgType::LoadPartitions)),
                 db_name: "".to_string(),
                 collection_name: collection_name.into(),
-                partition_names: partition_names,
+                partition_names,
             })
             .await?
             .into_inner();

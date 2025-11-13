@@ -1,24 +1,17 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
 use futures::future::join_all;
+use milvus::tests_common::*;
 use milvus::{
     client::*,
-    collection::*,
     data::FieldColumn,
     error::Result,
     index::{IndexParams, IndexType, MetricType},
-    mutate::{DeleteOptions, InsertOptions},
-    proto::schema::DataType,
-    query::SearchOptions,
+    mutate::DeleteOptions,
     schema::{CollectionSchemaBuilder, FieldSchema},
-    value::{Value, ValueVec},
+    value::ValueVec,
 };
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::{
-    borrow::Cow,
     collections::HashMap,
     sync::{Arc, Mutex},
     time::Duration,
@@ -29,6 +22,7 @@ const AGGRESSIVE_COLLECTION_NAME: &str = "aggressive_hpc_test_collection";
 const BATCH_SIZE: i64 = 1000;
 const WRITER_TASKS: usize = 20;
 const DELETER_TASKS: usize = 5;
+#[allow(dead_code)]
 const UPSERTER_TASKS: usize = 5;
 const TOTAL_INSERTS_PER_TASK: i64 = 10_000;
 const DELETE_BATCH_SIZE: usize = 100;
@@ -112,7 +106,7 @@ async fn high_concurrency_crud_and_indexing() -> Result<()> {
 
         delete_tasks.push(tokio::spawn(async move {
             let ids_to_delete = {
-                let mut guard = inserted_ids_clone.lock().unwrap();
+                let guard = inserted_ids_clone.lock().unwrap();
                 let mut rng = rand::thread_rng();
                 let sample: Vec<i64> = guard
                     .choose_multiple(&mut rng, DELETE_BATCH_SIZE)

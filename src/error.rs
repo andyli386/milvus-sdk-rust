@@ -34,7 +34,7 @@ pub enum Error {
     Collection(#[from] CollectionError),
 
     #[error("{0:?}")]
-    Grpc(#[from] GrpcError),
+    Grpc(Box<GrpcError>),
 
     #[error("{0:?}")]
     Schema(#[from] SchemaError),
@@ -84,6 +84,12 @@ impl From<Status> for Error {
             .unwrap_or(ErrorCode::UnexpectedError);
 
         Error::Server(code, s.reason)
+    }
+}
+
+impl From<GrpcError> for Error {
+    fn from(value: GrpcError) -> Self {
+        Error::Grpc(Box::new(value))
     }
 }
 

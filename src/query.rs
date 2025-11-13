@@ -387,7 +387,7 @@ pub type HybridSearchOptions = SearchOptions;
 ///     .limit(100)
 ///     .offset(0);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct QueryOptions {
     output_fields: Vec<String>,
     partition_names: Vec<String>,
@@ -412,20 +412,6 @@ pub enum IdType {
     Int64(Vec<i64>),
     /// String IDs (VarChar)
     VarChar(Vec<String>),
-}
-
-impl Default for QueryOptions {
-    fn default() -> Self {
-        Self {
-            output_fields: Vec::new(),
-            partition_names: Vec::new(),
-            guarantee_timestamp: 0,
-            query_params: vec![],
-            consistency_level: 0,
-            use_default_consistency: false,
-            expr_template_values: HashMap::new(),
-        }
-    }
 }
 
 impl QueryOptions {
@@ -1298,12 +1284,7 @@ impl Client {
                 nq: data.len() as _,
                 placeholder_group: get_place_holder_group(&data)?,
                 dsl_type: DslType::BoolExprV1 as _,
-                output_fields: options
-                    .output_fields
-                    .clone()
-                    .into_iter()
-                    .map(|f| f.into())
-                    .collect(),
+                output_fields: options.output_fields.clone(),
                 search_params,
                 travel_timestamp: 0,
                 guarantee_timestamp: self
@@ -1501,11 +1482,11 @@ impl Client {
                 nq: req.data.len() as i64,
                 not_return_all_meta: false,
                 consistency_level: {
-                    let level = extract_param(&search_params, "consistency_level", "0");
+                    let level = extract_param(search_params.as_slice(), "consistency_level", "0");
                     level.parse().unwrap_or(ConsistencyLevel::default() as _)
                 },
                 use_default_consistency: extract_param(
-                    &search_params,
+                    search_params.as_slice(),
                     "use_default_consistency",
                     "true",
                 )
@@ -1521,7 +1502,7 @@ impl Client {
         }
 
         // Prepare ranker parameters
-        let rank_params = prepare_rank_params(&vec![], ranker.get_params());
+        let rank_params = prepare_rank_params(&[], ranker.get_params());
 
         // Create HybridSearchRequest
         let request = proto::milvus::HybridSearchRequest {
@@ -1537,11 +1518,15 @@ impl Client {
                 .await,
             not_return_all_meta: false,
             output_fields: options.output_fields,
-            consistency_level: extract_param(&options.search_params, "consistency_level", "0")
-                .parse()
-                .unwrap_or(ConsistencyLevel::default() as _),
+            consistency_level: extract_param(
+                options.search_params.as_slice(),
+                "consistency_level",
+                "0",
+            )
+            .parse()
+            .unwrap_or(ConsistencyLevel::default() as _),
             use_default_consistency: extract_param(
-                &options.search_params,
+                options.search_params.as_slice(),
                 "use_default_consistency",
                 "true",
             )
@@ -1655,7 +1640,7 @@ impl Client {
         if data_type == DataType::VarChar {
             let ids: Vec<String> = pks.iter().map(|entry| format!("'{}'", entry)).collect();
             let expr = format!("{pk_field_name} in {:?}", ids);
-            return Ok(expr);
+            Ok(expr)
         } else {
             let mut ids: Vec<i64> = Vec::new();
             for (i, entry) in pks.iter().enumerate() {
@@ -1670,7 +1655,7 @@ impl Client {
                 }
             }
             let expr = format!("{pk_field_name} in {:?}", ids);
-            return Ok(expr);
+            Ok(expr)
         }
     }
 
@@ -1722,8 +1707,6 @@ impl Client {
             IdType::VarChar(ids_string) => ids_string,
         };
 
-        let ids: Vec<String> = ids.into_iter().map(|x| x.into()).collect();
-
         //If ids is empty,return an empty vec
         if ids.is_empty() {
             return Ok(vec![]);
@@ -1732,7 +1715,7 @@ impl Client {
         let collection = self.collection_cache.get(&collection_name).await?;
         let expr = self.pack_pks_expr(&collection, ids)?;
         let option = options.unwrap_or_default();
-        Ok(self.query(collection_name, expr.as_str(), &option).await?)
+        self.query(collection_name, expr.as_str(), &option).await
     }
 }
 
@@ -1752,7 +1735,7 @@ impl Client {
 /// # Errors
 ///
 /// Returns an error if the vector data is invalid or unsupported
-pub fn get_place_holder_group(vectors: &Vec<Value>) -> Result<Vec<u8>> {
+pub fn get_place_holder_group(vectors: &[Value]) -> Result<Vec<u8>> {
     let group = PlaceholderGroup {
         placeholders: vec![get_place_holder_value(vectors)?],
     };
@@ -1760,7 +1743,7 @@ pub fn get_place_holder_group(vectors: &Vec<Value>) -> Result<Vec<u8>> {
     group.encode(&mut buf).map_err(|e| {
         SuperError::Unexpected(format!("Failed to encode placeholder group: {}", e))
     })?;
-    return Ok(buf.to_vec());
+    Ok(buf.to_vec())
 }
 
 /// Converts vector data to placeholder value format
@@ -1779,14 +1762,14 @@ pub fn get_place_holder_group(vectors: &Vec<Value>) -> Result<Vec<u8>> {
 /// # Errors
 ///
 /// Returns an error if the vector data is invalid or unsupported
-fn get_place_holder_value(vectors: &Vec<Value>) -> Result<PlaceholderValue> {
+fn get_place_holder_value(vectors: &[Value]) -> Result<PlaceholderValue> {
     let mut place_holder = PlaceholderValue {
         tag: "$0".to_string(),
         r#type: PlaceholderType::None as _,
         values: Vec::new(),
     };
     // if no vectors, return an empty one
-    if vectors.len() == 0 {
+    if vectors.is_empty() {
         return Ok(place_holder);
     };
 
@@ -1819,7 +1802,7 @@ fn get_place_holder_value(vectors: &Vec<Value>) -> Result<PlaceholderValue> {
             }
         };
     }
-    return Ok(place_holder);
+    Ok(place_holder)
 }
 
 /// Extracts a parameter value from search parameters with a default fallback
@@ -1836,7 +1819,7 @@ fn get_place_holder_value(vectors: &Vec<Value>) -> Result<PlaceholderValue> {
 /// # Returns
 ///
 /// Parameter value as string, or default value if not found
-fn extract_param(search_params: &Vec<KeyValuePair>, key: &str, default: &str) -> String {
+fn extract_param(search_params: &[KeyValuePair], key: &str, default: &str) -> String {
     search_params
         .iter()
         .find(|param| param.key == key)
@@ -1905,15 +1888,15 @@ fn get_params(search_params: &Vec<KeyValuePair>) -> String {
 ///
 /// Combined rank parameters with defaults and optional parameters
 fn prepare_rank_params(
-    search_params: &Vec<KeyValuePair>,
+    search_params: &[KeyValuePair],
     rank_params: Vec<KeyValuePair>,
 ) -> Vec<KeyValuePair> {
     let mut final_rank_params = rank_params;
 
     // Parameters with default values
-    let limit = extract_param(&search_params, "limit", "10");
-    let round_decimal = extract_param(&search_params, "round_decimal", "-1");
-    let offset = extract_param(&search_params, "offset", "0");
+    let limit = extract_param(search_params, "limit", "10");
+    let round_decimal = extract_param(search_params, "round_decimal", "-1");
+    let offset = extract_param(search_params, "offset", "0");
 
     final_rank_params.push(KeyValuePair {
         key: "limit".to_string(),

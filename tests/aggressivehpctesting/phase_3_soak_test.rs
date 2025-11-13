@@ -1,10 +1,6 @@
-#[path = "../common/mod.rs"]
-mod common;
-
-use common::*;
+use milvus::tests_common::*;
 use milvus::{
     client::*,
-    collection::*,
     data::FieldColumn,
     error::Result,
     index::{IndexParams, IndexType, MetricType},

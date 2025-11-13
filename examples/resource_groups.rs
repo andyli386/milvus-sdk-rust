@@ -14,7 +14,7 @@ async fn main() -> Result<()> {
     println!("================Create Resource Group==================");
     let res = client.list_resource_groups().await?;
     //drop rg if exists
-    if res.iter().find(|&s| s.eq(RG_NAME)).is_some() {
+    if res.iter().any(|s| s.eq(RG_NAME)) {
         let options = UpdateRgOptions::new().limits(0).requests(0);
         let configs: HashMap<String, CreateRgOptions> =
             HashMap::from([(RG_NAME.to_string(), options)]);

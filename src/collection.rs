@@ -85,7 +85,7 @@ impl CollectionCache {
         Self {
             collections: dashmap::DashMap::new(),
             timestamps: dashmap::DashMap::new(),
-            client: client,
+            client,
         }
     }
 
@@ -94,7 +94,7 @@ impl CollectionCache {
         self.timestamps.clear();
     }
 
-    pub async fn get<'a>(&self, name: &str) -> Result<Collection> {
+    pub async fn get(&self, name: &str) -> Result<Collection> {
         if !self.local_exist(name) {
             let resp = self
                 .client
@@ -134,7 +134,7 @@ impl CollectionCache {
     }
 
     pub fn get_timestamp(&self, name: &str) -> Option<Timestamp> {
-        self.timestamps.get(name).map(|v| v.value().clone())
+        self.timestamps.get(name).map(|v| *v.value())
     }
 
     fn local_exist(&self, name: &str) -> bool {
@@ -156,7 +156,7 @@ impl From<proto::milvus::DescribeCollectionResponse> for Collection {
             // num_partitions: value.partitions_num as usize,
             consistency_level,
             description: schema.description,
-            fields: schema.fields.into_iter().map(|f| Field::from(f)).collect(),
+            fields: schema.fields.into_iter().map(Field::from).collect(),
             // enable_dynamic_field: value.enable_dynamic_field,
         }
     }
@@ -380,10 +380,10 @@ impl Client {
             .clone()
             .rename_collection(crate::proto::milvus::RenameCollectionRequest {
                 base: Some(MsgBase::new(MsgType::RenameCollection)),
-                db_name: db_name,
+                db_name,
                 old_name: name,
-                new_name: new_name,
-                new_db_name: new_db_name,
+                new_name,
+                new_db_name,
             })
             .await?
             .into_inner();
@@ -582,7 +582,7 @@ impl Client {
                 db_name: "".to_string(),
                 collection_name: collection_name.into(),
                 field_name: field_name.into(),
-                properties: properties,
+                properties,
                 delete_keys: vec![],
             })
             .await?
@@ -624,7 +624,7 @@ impl Client {
                 db_name: "".to_string(),
                 collection_name: collection_name.into(),
                 collection_id: 0,
-                properties: properties,
+                properties,
                 delete_keys: Vec::new(),
             })
             .await?

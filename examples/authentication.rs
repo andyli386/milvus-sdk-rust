@@ -93,7 +93,7 @@ async fn privilege_test(client: &Client) -> Result<()> {
     if client
         .list_privilege_groups()
         .await?
-        .contains_key(&privilege_group_name.to_string())
+        .contains_key(privilege_group_name)
     {
         client.drop_privilege_group(privilege_group_name).await?;
     }

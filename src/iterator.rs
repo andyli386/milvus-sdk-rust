@@ -580,6 +580,7 @@ impl QueryIterator {
                 .read(true)
                 .write(true)
                 .create(true)
+                .truncate(false)
                 .open(cp_file_path)
             {
                 self.cp_file_handler = Some(file);
@@ -590,7 +591,7 @@ impl QueryIterator {
                     let reader = BufReader::new(file);
                     let lines: Vec<String> = reader
                         .lines()
-                        .map(|line| line.map_err(|e| Error::Io(e)))
+                        .map(|line| line.map_err(Error::Io))
                         .collect::<Result<Vec<String>>>()?;
 
                     if lines.len() >= 2 {
@@ -763,7 +764,7 @@ impl QueryIterator {
 
         for field_column in results {
             if field_column.name == *self.pk_field_name.as_ref().unwrap() {
-                if field_column.len() == 0 {
+                if field_column.is_empty() {
                     continue;
                 }
 
@@ -965,7 +966,7 @@ impl QueryIterator {
             if results.is_empty() {
                 self.has_more = false;
             } else {
-                let actual_returned = results.iter().map(|r| r.len() as usize).sum::<usize>();
+                let actual_returned = results.iter().map(|r| r.len()).sum::<usize>();
                 // 不要基于 actual_returned < remaining_limit 来判断是否还有更多数据
                 // 因为 Milvus 可能返回不同数量的记录
                 // 只有当返回空结果时才设置 has_more = false
@@ -1211,6 +1212,7 @@ impl SearchIterator {
                 .read(true)
                 .write(true)
                 .create(true)
+                .truncate(false)
                 .open(cp_file_path)
             {
                 self.cp_file_handler = Some(file);
@@ -1221,7 +1223,7 @@ impl SearchIterator {
                     let reader = BufReader::new(file);
                     let lines: Vec<String> = reader
                         .lines()
-                        .map(|line| line.map_err(|e| Error::Io(e)))
+                        .map(|line| line.map_err(Error::Io))
                         .collect::<Result<Vec<String>>>()?;
 
                     if lines.len() >= 2 {
@@ -1419,10 +1421,8 @@ impl SearchIterator {
                 self.iterator_token = Some(iter_v2_results.token);
             }
             self.last_bound = Some(iter_v2_results.last_bound.to_string());
-        } else {
-            if self.iterator_token.is_none() {
-                self.iterator_token = Some(format!("token_{}", self.session_ts));
-            }
+        } else if self.iterator_token.is_none() {
+            self.iterator_token = Some(format!("token_{}", self.session_ts));
         }
 
         let mut result = Vec::new();
