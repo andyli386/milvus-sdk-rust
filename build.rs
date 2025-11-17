@@ -1,10 +1,14 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Prefer vendored protoc (downloaded from GitHub), fallback to user-provided PROTOC if vendored lookup fails.
-    let protoc = protoc_bin_vendored::protoc_bin_path().or_else(|_| {
-        std::env::var_os("PROTOC")
-            .map(std::path::PathBuf::from)
-            .ok_or_else(|| "PROTOC not found (vendored failed and $PROTOC not set)".into())
-    })?;
+    let protoc = protoc_bin_vendored::protoc_bin_path()
+        .ok()
+        .or_else(|| std::env::var_os("PROTOC").map(std::path::PathBuf::from))
+        .ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "PROTOC not found (vendored failed and $PROTOC not set)",
+            )
+        })?;
     std::env::set_var("PROTOC", protoc);
 
     tonic_build::configure()
