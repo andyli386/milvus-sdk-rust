@@ -7,8 +7,14 @@ license-file = "LICENSE"
 
 [lib]
 name = "milvus"
+doctest = false # doctests rely on async contexts/Milvus instances; disable to unblock workspace tests
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+# Used to opt-in to integration tests that require a running Milvus instance.
+milvus-tests = []
 
 [dependencies]
 tonic = { version = "0.11.0", features = ["tls", "tls-roots"] }
@@ -36,55 +42,69 @@ tonic-build = { version = "0.11.0", default-features = false, features = [
 [[test]]
 name = "client_with_timeout"
 path = "tests/testsoutsideoftestsuite/client_with_timeout.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "client_flush_collections"
 path = "tests/testsoutsideoftestsuite/client_flush_collections.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "client_search"
 path = "tests/testsoutsideoftestsuite/client_search.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "collection_list_collections"
 path = "tests/testsoutsideoftestsuite/collection_list_collections.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "collection_get_collection_stats"
 path = "tests/testsoutsideoftestsuite/collection_get_collection_stats.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "collection_release_collection"
 path = "tests/testsoutsideoftestsuite/collection_release_collection.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "collection_get_compaction_state"
 path = "tests/testsoutsideoftestsuite/collection_get_compaction_state.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "partition_create_partition"
 path = "tests/testsoutsideoftestsuite/partition_create_partition.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "partition_drop_partition"
 path = "tests/testsoutsideoftestsuite/partition_drop_partition.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "partition_list_partitions"
 path = "tests/testsoutsideoftestsuite/partition_list_partitions.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "partition_has_partition"
 path = "tests/testsoutsideoftestsuite/partition_has_partition.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "partition_get_partition_stats"
 path = "tests/testsoutsideoftestsuite/partition_get_partition_stats.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "mutate_delete"
 path = "tests/testsoutsideoftestsuite/mutate_delete.rs"
+required-features = ["milvus-tests"]
 
 [[test]]
 name = "aggressive_hpc_testing"
 path = "tests/aggressivehpctesting/mod.rs"
+required-features = ["milvus-tests"]

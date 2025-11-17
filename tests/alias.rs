@@ -1,3 +1,5 @@
+#![cfg(feature = "milvus-tests")]
+
 use milvus::tests_common::*;
 use milvus::{client::Client, error::Result};
 

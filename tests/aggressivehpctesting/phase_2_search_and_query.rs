@@ -1,3 +1,5 @@
+#![cfg(feature = "milvus-tests")]
+
 use futures::future::join_all;
 use milvus::tests_common::*;
 use milvus::{

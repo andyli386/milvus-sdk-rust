@@ -1,3 +1,5 @@
+#![cfg(feature = "milvus-tests")]
+
 use milvus::client::*;
 use std::time::Duration;
 

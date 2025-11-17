@@ -1,3 +1,5 @@
+#![cfg(feature = "milvus-tests")]
+
 use milvus::tests_common::*;
 #[tokio::test]
 async fn test_get_collection_stats() {
