@@ -36,6 +36,7 @@ rand = "0.8.5"
 tonic-build = { version = "0.11.0", default-features = false, features = [
     "prost",
 ] }
+protoc-bin-vendored = "3.1"
 
 [dev-dependencies]
 
